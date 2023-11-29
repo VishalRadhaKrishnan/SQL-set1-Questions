@@ -1,0 +1,531 @@
+Query1 _17:
+===========
+--Write an SQL query that reports the products that were only sold in the first quarter of 2019. That is,
+--between 2019-01-01 and 2019-03-31 inclusive.
+
+SELECT product_id, product_name
+FROM Product
+WHERE product_id NOT IN (
+    SELECT DISTINCT product_id
+    FROM Sales
+    WHERE sale_date < '2019-01-01' OR sale_date > '2019-03-31'
+);
+
+Output:
+=======
+product_id   product_name
+1 				S8
+
+-- WHERE is a SQL keyword used to specify a condition that the rows in the table must meet to be included in the query's result.
+-- sale_date < '2019-01-01'--In other words, it selects rows with sale dates before January 1, 2019.
+-- sale_date > '2019-03-31'--It selects rows with sale dates after March 31, 2019.
+-- By looking the we know result for that we excluding the unwanted rows from to get actual result.
+
+Query1 _18:
+===========
+
+-- Write an SQL query to find all the authors that viewed at least one of their own articles.
+-- Return the result table sorted by id in ascending order
+
+SELECT DISTINCT(AUTHOR_ID) FROM VIEWS
+WHERE AUTHOR_ID = VIEWER_ID 
+ORDER BY AUTHOR_ID ASC;
+
+Output:
+=======
+id
+4
+7
+
+-- It selects distinct author_id values from the "Views" table where author_id is equal to viewer_id, 
+--meaning the author has viewed their own article.
+
+Query_19:
+=========
+
+--Write an SQL query to find the percentage of immediate orders in the table, rounded to 2 decimal
+--places.
+
+SELECT 
+    ROUND((SUM(CASE WHEN order_date = customer_pref_delivery_date THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 2) AS immediate_percentage
+FROM DELIVERY;
+
+Output:
+=======
+immediate_percentage
+33.33
+
+Query_20:
+=========
+
+--Write an SQL query to find the ctr of each Ad. Round ctr to two decimal points.
+--Return the result table ordered by ctr in descending order and by ad_id in ascending order in case of a
+--tie.
+
+SELECT
+    ad_id,
+    CASE
+        WHEN clicks + views = 0 THEN 0.00
+        ELSE ROUND((clicks / (clicks + views)) * 100, 2)
+    END AS ctr
+FROM (
+    SELECT
+        ad_id,
+        SUM(CASE WHEN action = 'Clicked' THEN 1 ELSE 0 END) AS clicks,
+        SUM(CASE WHEN action = 'Viewed' THEN 1 ELSE 0 END) AS views
+    FROM Ads
+    GROUP BY ad_id
+) AS ad_stats
+ORDER BY ctr DESC, ad_id;
+
+output:
+=======
+AD_ID	CTR
+1		66.67
+3		50
+2		33.33
+5		0
+
+Query_21:
+=========
+
+--Write an SQL query to find the team size of each of the employees.
+--Return result table in any order
+
+SELECT team_id,
+    sum (case when team_id = 8 then 1 else 0 end) as team_size_8,
+    sum (case when team_id = 7 then 1 else 0 end) as team_size_7,
+    sum (case when team_id = 9 then 1 else 0 end) as team_size_9
+from Employee
+group by team_id;
+
+output:
+=======
+TEAM_ID	TEAM_SIZE_8	TEAM_SIZE_7	TEAM_SIZE_9
+8			3			0			0
+9			0			0			2
+7			0			1			0
+
+SELECT employee_id, 
+       (SELECT COUNT(*) 
+        FROM Employee AS E2 
+        WHERE E1.team_id = E2.team_id) AS team_size
+FROM Employee AS E1
+ORDER BY employee_id;
+
+output:
+=======
+EMPLOYEE_ID	 TEAM_SIZE
+1			     3
+2			     3
+3			     3
+4			     1
+5			     2
+6			     2
+
+SELECT team_id, COUNT(*) AS team_size
+FROM Employee
+GROUP BY team_id;
+
+output:
+=======
+TEAM_ID	TEAM_SIZE
+8			3
+7			1
+9			2
+
+
+SELECT employee_id, count(*) over( partition by team_id ) as team_size
+FROM Employee
+ORDER BY employee_id;
+
+output:
+=======
+EMPLOYEE_ID	TEAM_SIZE
+1			 3
+2			 3
+3			 3
+4			 1
+5			 2
+6			 2
+
+Query_22:
+=========
+--Write an SQL query to find the type of weather in each country for November 2019.
+--The type of weather is:
+--● Cold if the average weather_state is less than or equal 15,
+--● Hot if the average weather_state is greater than or equal to 25, and
+--● Warm otherwise.
+--Return result table in any order.
+
+select c.country_name,
+       case 
+           when AVG(w.weather_state) <= 15 then 'Cold'
+           when AVG(w.weather_state) >= 25 then 'Hot'
+           else 'Warm'
+       end as weather_type
+from Countries as c
+inner JOIN Weather w ON c.country_id = w.country_id 
+where w.day between '2019-11-01' and '2019-11-30' 
+group by c.country_name;
+
+output:
+=======
+COUNTRY_NAME	WEATHER_TYPE
+USA					Cold
+Australia			Cold
+China				Warm
+Peru				Hot
+Morocco				Hot
+
+
+Query_23:
+=========
+--Write an SQL query to find the average selling price for each product. average_price should be
+--rounded to 2 decimal places.
+--Return the result table in any order.
+
+SELECT p.product_id, round(sum(price*units)/sum(units),2) selling_price
+FROM prices AS p
+JOIN UnitsSold AS u ON p.product_id = u.product_id
+and purchase_date between start_date and end_date
+group by p.product_id
+
+
+output:
+=======
+PRODUCT_ID	SELLING_PRICE
+	1			6.96
+    2			16.96
+
+Query_24:
+=========	
+--Write an SQL query to report the first login date for each player.
+--Return the result table in any order.
+
+select player_id,min(event_date)as first_login
+from activity
+group by player_id;
+
+output:
+=======
+PLAYER_ID	FIRST_LOGIN
+1			2016-03-01
+2			2017-06-25
+3			2016-03-02
+
+
+Query_25:
+=========
+--Write an SQL query to report the device that is first logged in for each player.
+
+SELECT player_id,MIN(device_id) AS first_logged_in_device
+FROM activity
+GROUP BY player_id;
+
+output:
+=======
+PLAYER_ID	FIRST_LOGGED_IN_DEVICE
+1					2
+2					3
+3					1
+
+
+Query_26:
+=========
+--Write an SQL query to get the names of products that have at least 100 units ordered in February 2020
+--and their amount.
+
+select 
+pd.product_name,
+sum(unit) as total_units
+from Orders od LEFT OUTER JOIN products pd ON pd.product_id = od.product_id
+where order_date between '2020-02-01' and '2020-02-28'
+group by pd.product_name
+having sum(unit) >= '100';
+
+output:
+=======
+PRODUCT_NAME		TOTAL_UNITS
+Leetcode_Solutions		130
+Leetcode_Kit			100
+
+
+Query_27:
+=========
+--Write an SQL query to find the users who have valid emails.
+--A valid e-mail has a prefix name and a domain where:
+--● The prefix name is a string that may contain letters (upper or lower case), digits, underscore
+--'_', period '.', and/or dash '-'. The prefix name must start with a letter.
+--● The domain is '@leetcode.com'.
+
+select user_id,name,mail from Users
+WHERE mail REGEXP '^[a-zA-Z][a-zA-Z0-9_.-]*@leetcode\\.com$';
+
+output:
+=======
+user_id 	name 			mail
+	1 		Winston		winston@leetcode.com
+	3 		Annabelle	bella-@leetcode.com
+	4 		Sally		sally.come@leetcode.com
+
+
+Query_28:
+=========
+-- Write an SQL query to report the distinct titles of the kid-friendly movies streamed in June 2020.
+
+select title from content
+join tvprogram 
+on tvprogram.content_id = content.content_id
+where program_date between '2020-06-01 12:00' and '2020-06-30 11:59'
+and kids_content = 'Y'
+
+output:
+=======
+TITLE
+Aladdin
+
+Query_30:
+=========
+--Write an SQL query to find the npv of each query of the Queries table.
+
+select q.id,q.year,npv from queries q
+left outer join npv
+on q.id = npv.id and q.year=npv.year
+order by q.id;
+
+output:
+=======
+ID	YEAR	NPV
+1	2019	113
+2	2008	121
+3	2009	12
+7	2020	30
+7	2019	0
+7	2018	
+13	2019	40
+
+Query_31:
+=========
+--Write an SQL query to show the unique ID of each user, If a user does not have a unique ID replace just show null.
+
+select u.unique_id,e.name from employees e
+left outer join employeeuni u
+on u.id = e.id
+
+output:
+=======
+UNIQUE_ID		NAME
+null			Alice
+null			Bob
+2				Meir
+3				Winston
+1				Jonathan
+
+Query_32:
+=========
+-- Write an SQL query to report the distance travelled by each user.
+-- Return the result table ordered by travelled_distance in descending order, if two or more users
+-- travelled the same distance, order them by their name in ascending order`
+
+select u.name,sum(r.distance) from USERS u
+left outer JOIN  rides r
+ON U.ID = r.user_id
+group by  u.name,r.user_id
+order by sum(r.distance) desc, u.name asc ;
+
+Output:
+=======
+NAME	SUM(R.DISTANCE)
+Donald		0
+Elvis		450
+Lee			450
+Bob			317
+Jonathan	312
+Alex		222
+Alice		120
+
+Query_33:
+=========
+--Write an SQL query to:
+--● Find the name of the user who has rated the greatest number of movies. In case of a tie,
+--return the lexicographically smaller user name.
+--● Find the movie name with the highest average rating in February 2020. In case of a tie, return
+--the lexicographically smaller movie name.
+
+SELECT user_name
+FROM (
+    SELECT u.name AS user_name, COUNT(r.movie_id) AS rated_movies
+    FROM Users u
+    LEFT JOIN MovieRating r ON u.user_id = r.user_id
+    GROUP BY u.user_id,u.name
+    ORDER BY rated_movies DESC, user_name
+    LIMIT 1);
+    
+SELECT movie_title
+FROM (
+    SELECT m.title AS movie_title, AVG(r.rating) AS avg_rating
+    FROM Movies m
+    LEFT JOIN MovieRating r ON m.movie_id = r.movie_id
+    WHERE r.created_at BETWEEN '2020-02-01' AND '2020-02-29'
+    GROUP BY m.movie_id,m.title
+    ORDER BY avg_rating DESC, movie_title
+    LIMIT 1);
+	
+output:
+=======
+USER_NAME
+Daniel
+
+MOVIE_TITLE
+Frozen_2
+
+Query_34:
+=========
+--Write an SQL query to report the number of calls and the total call duration between each pair -of distinct persons (person1, person2) where person1 < person2.
+
+SELECT
+    CASE WHEN from_id < to_id THEN from_id ELSE to_id END AS person1,
+    CASE WHEN from_id < to_id THEN to_id ELSE from_id END AS person2,
+    COUNT(*) AS call_count,
+    SUM(duration) AS total_duration
+FROM Calls
+GROUP BY person1,person2
+ORDER BY person1,person2;
+
+output:
+=======
+PERSON1	PERSON2	CALL_COUNT	TOTAL_DURATION
+1			2		2			70
+1			3		1			20
+3			4		4			999
+
+Query_35:
+=========
+--Write an SQL query to report the number of cubic feet of volume the inventory occupies in each
+--warehouse.
+
+SELECTw.name AS warehouse_name,SUM(p.Width * p.Length * p.Height * w.units) AS volume
+FROM Warehouse w
+JOIN
+Products p ON w.product_id = p.product_id
+GROUP BY w.name;
+
+output:
+=======
+WAREHOUSE_NAME	VOLUME
+ LCHouse1		12250
+ LCHouse2		20250
+ LCHouse3		800
+ 
+ 
+ Query_36:
+ =========
+ --Write an SQL query to report the difference between the number of apples and oranges sold each --day.Return the result table ordered by sale_date
+ 
+SELECT sale_date,
+SUM(CASE WHEN fruit = 'apples' THEN sold_num ELSE -sold_num END) AS diff
+FROM Sales1
+GROUP BY sale_date
+ORDER BY sale_date;
+
+output:
+=======
+SALE_DATE	DIFF
+2020-05-01	 2
+2020-05-02	 0
+2020-05-03	 20
+2020-05-04	 -1
+
+
+Query_37:
+=========
+--Write an SQL query to report the managers with at least five direct reports.
+--Return the result table in any order.
+
+SELECT DISTINCT manager.name
+FROM Employee manager
+WHERE manager.id IN (
+    SELECT managerId
+    FROM Employee
+    WHERE managerId <> 0
+    GROUP BY managerId
+    HAVING COUNT(id) >= 5
+);
+
+
+output:
+=======
+NAME
+John
+
+Query_38:
+=========
+--Write an SQL query to report the respective department name and number of students majoring in
+--each department for all departments in the Department table (even ones with no current students).
+--Return the result table ordered by student_number in descending order. In case of a tie, order them by dept_name alphabetically.
+
+select d.dept_name,count(student_id) from department d
+left outer join student s
+on d.dept_id = s.dept_id
+group by d.dept_name;
+
+output:
+=======
+DEPT_NAME	COUNT(STUDENT_ID)
+Engineering			2
+Science				1
+Law					0
+
+
+Query_39:
+=========
+--Write an SQL query to report the customer ids from the Customer table that bought all the --products in the Product table.
+
+select c.customer_id from customer c
+left outer join product p
+on c.product_key = p.product_key
+group by c.customer_id
+having count(p.product_key) >=2;
+
+output:
+=======
+CUSTOMER_ID
+1
+3
+
+Query_40:
+=========
+--Write an SQL query that reports the most experienced employees in each project. In case of a --tie,report all employees with the maximum number of experience years.
+
+select p.project_id,e.employee_id from project p
+join employee1 e
+on p.employee_id = e.employee_id
+where e.experience_years>=3
+group by p.project_id,e.employee_id;
+
+output:
+=======
+PROJECT_ID	EMPLOYEE_ID
+	1			1
+	1			3
+	2			1
+	
+
+Query_41:
+=========
+--Write a SQL query to find the highest grade with its corresponding course for each student. In case of a tie, you should find the course with the smallest course_id.
+--Return the result table ordered by student_id in ascending order.
+
+select student_id,max(grade)  from enrollments
+group by student_id
+order by student_id;
+
+output:
+=======
+STUDENT_ID	MAX(GRADE)
+1				99
+2				95
+3				82
+
+
